@@ -9,6 +9,25 @@ class FileProcessor(object):
         year = self.document[start:end].split('/')[1]
         return year
 
+    def get_month(self, tag="INFORME DEL MES: "):
+        start = self.document.find(tag) + len(tag)
+        end = self.document.find("\n", start)
+        month_name = self.document[start:end].split('/')[0].strip()
+        months = {'ENERO': '01',
+                  'FEBRERO': '02',
+                  'MARZO': '03',
+                  'ABRIL': '04',
+                  'MAYO': '05',
+                  'JUNIO': '06',
+                  'JULIO': '07',
+                  'AGOSTO': '08',
+                  'SEPTIEMBRE': '09',
+                  'OCTUBRE': '10',
+                  'NOVIEMBRE': '11',
+                  'DICIEMBRE': '12'
+                  }
+        return months[month_name]
+
     def get_transaction_row(self, row):
         columns = row.split('  ')
         columns = [column.strip() for column in columns]
