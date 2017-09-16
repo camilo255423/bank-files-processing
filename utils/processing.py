@@ -6,7 +6,7 @@ class FileProcessor(object):
     def get_year(self, tag="INFORME DEL MES: "):
         start = self.document.find(tag) + len(tag)
         end = self.document.find("\n", start)
-        year = self.document[start:end].split('/')[1]
+        year = self.document[start:end].split('/')[1].strip()
         return year
 
     def get_month(self, tag="INFORME DEL MES: "):
@@ -37,6 +37,23 @@ class FileProcessor(object):
         columns[2] = columns[2].strip()
         return columns
 
+    def get_transaction_as_dict(self, transaction):
+        year = self.get_year()
+        if len(transaction) > 5:
+            office = transaction[5]
+        else:
+            office = ''
+        dict_transaction = {
+            'date': '{}-{}-{}'.format(transaction[0],
+                                      transaction[1],
+                                      year),
+            'value': float(transaction[2]),
+            'document_number': transaction[3],
+            'transaction_type': transaction[4],
+            'office': office
+        }
+        return dict_transaction
+
     def get_pages(self, document, footer):
         pages = []
         pages.append(document.split(footer)[0])
@@ -52,7 +69,9 @@ class FileProcessor(object):
         lines = page[start:].split('\n')
         for i, line in enumerate(lines):
             if '$' in line:
-                transactions.append(self.get_transaction_row(line))
+                transaction = self.get_transaction_row(line)
+                transaction_dict = self.get_transaction_as_dict(transaction)
+                transactions.append(transaction_dict)
         return transactions
 
     def get_transactions(self,
