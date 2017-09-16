@@ -1,4 +1,3 @@
-
 class FileProcessor(object):
     def __init__(self, file_name):
         with open(file_name) as file_:
@@ -19,12 +18,11 @@ class FileProcessor(object):
         columns[2] = columns[2].strip()
         return columns
 
-    def get_pages(self, header, footer):
+    def get_pages(self, document, footer):
         pages = []
-        document = self.document
         pages.append(document.split(footer)[0])
         if len(document.split(footer)) > 1:
-            pages += self.get_pages(document.split(footer)[1], header, footer)
+            pages += self.get_pages(document.split(footer)[1], footer)
 
         return pages
 
@@ -40,7 +38,7 @@ class FileProcessor(object):
 
     def get_transactions(self,
                          footer='Banco Davivienda S.A NIT.860.034.313-7'):
-        pages = self.get_pages(footer)
+        pages = self.get_pages(self.document, footer)
         transactions = []
         for i, page in enumerate(pages):
             transactions += self.get_transactions_from_page(page)
