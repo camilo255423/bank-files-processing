@@ -1,8 +1,11 @@
 from utils.processing import FileProcessor
 from os import listdir
 from os.path import isfile, join
-from datetime import date
 import xlsxwriter
+
+INPUT_PATH = '/home/camilo/Documents/davivienda/extractos'
+OUTPUT_FILE='/home/camilo/Documents/davivienda/excel_files/transactions.xlsx'
+
 
 def add_to_workbook(file_processor, workbook):
     year = file_processor.get_year()
@@ -38,15 +41,17 @@ def add_to_workbook(file_processor, workbook):
     worksheet.set_column('D:D', 45)
     worksheet.set_column('E:E', 15)
 
+workbook = xlsxwriter.Workbook(OUTPUT_FILE)
 
-path = '/home/camilo/Documents/davivienda/'
-workbook = xlsxwriter.Workbook('transactions.xlsx')
+dir_elements = listdir(INPUT_PATH)
+dir_elements.sort(reverse = True)
 
-for element in listdir(path):
-    if isfile(join(path, element)):
-        file_name = join(path, element)
+for element in dir_elements:
+    if isfile(join(INPUT_PATH, element)):
+        file_name = join(INPUT_PATH, element)
         file_processor = FileProcessor(file_name)
         add_to_workbook(file_processor, workbook)
+
 
 workbook.close()
 
