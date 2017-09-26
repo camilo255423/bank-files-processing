@@ -82,3 +82,23 @@ class FileProcessor(object):
             transactions += self.get_transactions_from_page(page)
 
         return transactions
+
+
+def get_sum_similar_transactions(transactions, keywords=[],
+                                 exclude_keywords=[],
+                                 value_field='value',
+                                 keyword_field='transaction_type'):
+    total = 0
+    for transaction in transactions:
+        transaction_keywords = transaction[keyword_field].lower()
+        if any([word.lower() in transaction_keywords for word in keywords]) \
+                and \
+                all([word.lower() not in transaction_keywords for word in
+                     exclude_keywords]) \
+                or not keywords:
+            #print transaction_keywords
+            total += transaction[value_field]
+
+    return total
+
+

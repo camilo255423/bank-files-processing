@@ -1,4 +1,5 @@
 from utils.processing import FileProcessor
+from utils.processing import get_sum_similar_transactions
 from os import listdir
 from os.path import isfile, join
 import xlsxwriter
@@ -6,6 +7,10 @@ import xlsxwriter
 INPUT_PATH = '/home/camilo/Documents/davivienda/extractos'
 OUTPUT_FILE='/home/camilo/Documents/davivienda/excel_files/transactions.xlsx'
 
+INCOMES_KEYWORDS = ['abono', 'rendimientos', 'deposito']
+OUTCOMES_KEYWORDS = ['retiro', 'pago', 'trans', 'cobro', 'descuento',
+                     'compra', 'cuota', 'iva', 'gravamen', 'eaab', 'codensa',
+                     'etb', 'gas']
 
 def add_to_workbook(file_processor, workbook):
     year = file_processor.get_year()
@@ -50,7 +55,20 @@ for element in dir_elements:
     if isfile(join(INPUT_PATH, element)):
         file_name = join(INPUT_PATH, element)
         file_processor = FileProcessor(file_name)
-        add_to_workbook(file_processor, workbook)
+        transactions = file_processor.get_transactions()
+        incomes = get_sum_similar_transactions(transactions,
+                                               keywords=INCOMES_KEYWORDS
+                                               )
+        outcomes = get_sum_similar_transactions(transactions,
+                                                keywords=OUTCOMES_KEYWORDS,
+                                                exclude_keywords=INCOMES_KEYWORDS
+                                                )
+        total = get_sum_similar_transactions(transactions)
+
+        if abs((incomes + outcomes) - total) > 0.1:
+            raise Exception('incomes + outcomes <> total in file:' + file_name)
+
+        # add_to_workbook(file_processor, workbook)
 
 
 workbook.close()
