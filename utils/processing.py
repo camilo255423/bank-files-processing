@@ -1,3 +1,32 @@
+import constants
+
+
+class ProcessedDocument(object):
+    def __init__(self, year, month, transactions):
+        self.year = year
+        self.month = month
+        self.transactions = transactions
+
+    def get_sum_similar_transactions(self, keywords=[],
+                                     exclude_keywords=[],
+                                     value_field='value',
+                                     keyword_field='transaction_type'):
+        total = 0
+        for transaction in self.transactions:
+            transaction_keywords = transaction[keyword_field].lower()
+            if any([word.lower() in transaction_keywords for word in keywords])\
+                    and \
+                    all([word.lower() not in transaction_keywords for word in
+                         exclude_keywords]) \
+                    or not keywords:
+                total += transaction[value_field]
+
+        return total
+
+    def get_sum_all_transactions(self, value_field='value'):
+        return self.get_sum_similar_transactions(value_field=value_field)
+
+
 class FileProcessor(object):
     def __init__(self, file_name):
         with open(file_name) as file_:
@@ -13,31 +42,19 @@ class FileProcessor(object):
         start = self.document.find(tag) + len(tag)
         end = self.document.find("\n", start)
         month_name = self.document[start:end].split('/')[0].strip()
-        months = {'ENERO': '01',
-                  'FEBRERO': '02',
-                  'MARZO': '03',
-                  'ABRIL': '04',
-                  'MAYO': '05',
-                  'JUNIO': '06',
-                  'JULIO': '07',
-                  'AGOSTO': '08',
-                  'SEPTIEMBRE': '09',
-                  'OCTUBRE': '10',
-                  'NOVIEMBRE': '11',
-                  'DICIEMBRE': '12'
-                  }
+        months = constants.MONTHS
         return months[month_name]
 
-    def get_transaction_row(self, row):
+    def __get_transaction_row(self, row):
         columns = row.split('  ')
         columns = [column.strip() for column in columns]
         columns = filter(lambda value: value != '', columns)
-        columns[2] = columns[2].replace('$', '').\
+        columns[2] = columns[2].replace('$', ''). \
             replace('-', '').replace(',', '').replace('+', '')
         columns[2] = columns[2].strip()
         return columns
 
-    def get_transaction_as_dict(self, transaction):
+    def __get_transaction_as_dict(self, transaction):
         year = self.get_year()
         if len(transaction) > 5:
             office = transaction[5]
@@ -62,43 +79,25 @@ class FileProcessor(object):
 
         return pages
 
-    def get_transactions_from_page(self, page):
+    def get_transactions_from_page(self, page, start_tag="Fecha"):
         transactions = []
-        tag = "Fecha"
-        start = page.find(tag)
+        start = page.find(start_tag)
         lines = page[start:].split('\n')
         for i, line in enumerate(lines):
             if '$' in line:
-                transaction = self.get_transaction_row(line)
-                transaction_dict = self.get_transaction_as_dict(transaction)
+                transaction = self.__get_transaction_row(line)
+                transaction_dict = self.__get_transaction_as_dict(transaction)
                 transactions.append(transaction_dict)
         return transactions
 
-    def get_transactions(self,
-                         footer='Banco Davivienda S.A NIT.860.034.313-7'):
+    def get_processed_document(self,
+                               footer='Banco Davivienda S.A NIT.860.034.313-7'):
         pages = self.get_pages(self.document, footer)
         transactions = []
         for i, page in enumerate(pages):
             transactions += self.get_transactions_from_page(page)
 
-        return transactions
-
-
-def get_sum_similar_transactions(transactions, keywords=[],
-                                 exclude_keywords=[],
-                                 value_field='value',
-                                 keyword_field='transaction_type'):
-    total = 0
-    for transaction in transactions:
-        transaction_keywords = transaction[keyword_field].lower()
-        if any([word.lower() in transaction_keywords for word in keywords]) \
-                and \
-                all([word.lower() not in transaction_keywords for word in
-                     exclude_keywords]) \
-                or not keywords:
-            #print transaction_keywords
-            total += transaction[value_field]
-
-    return total
-
-
+        return ProcessedDocument(year=self.get_year(),
+                                 month=self.get_month(),
+                                 transactions=transactions
+                                 )

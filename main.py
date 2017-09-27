@@ -1,5 +1,5 @@
 from utils.processing import FileProcessor
-from utils.processing import get_sum_similar_transactions
+
 from os import listdir
 from os.path import isfile, join
 import xlsxwriter
@@ -11,6 +11,7 @@ INCOMES_KEYWORDS = ['abono', 'rendimientos', 'deposito']
 OUTCOMES_KEYWORDS = ['retiro', 'pago', 'trans', 'cobro', 'descuento',
                      'compra', 'cuota', 'iva', 'gravamen', 'eaab', 'codensa',
                      'etb', 'gas']
+
 
 def add_to_workbook(file_processor, workbook):
     year = file_processor.get_year()
@@ -55,15 +56,20 @@ for element in dir_elements:
     if isfile(join(INPUT_PATH, element)):
         file_name = join(INPUT_PATH, element)
         file_processor = FileProcessor(file_name)
-        transactions = file_processor.get_transactions()
-        incomes = get_sum_similar_transactions(transactions,
+        processed_document = file_processor.get_processed_document()
+        incomes = processed_document.get_sum_similar_transactions(
                                                keywords=INCOMES_KEYWORDS
                                                )
-        outcomes = get_sum_similar_transactions(transactions,
+        outcomes = processed_document.get_sum_similar_transactions(
                                                 keywords=OUTCOMES_KEYWORDS,
                                                 exclude_keywords=INCOMES_KEYWORDS
                                                 )
-        total = get_sum_similar_transactions(transactions)
+        total = processed_document.get_sum_all_transactions()
+
+        information = "Date: {}-{}, outcomes = {}, incomes = {}, total = {}" \
+        .format(processed_document.year, processed_document.month,
+                incomes, outcomes, total)
+        print(information)
 
         if abs((incomes + outcomes) - total) > 0.1:
             raise Exception('incomes + outcomes <> total in file:' + file_name)
